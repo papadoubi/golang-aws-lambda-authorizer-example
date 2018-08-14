@@ -6,8 +6,10 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/papadoubi/golang-aws-lambda-authorizer-example/auth"
 )
 
+// HandleAuth is a blueprint function for custom authorizer. It denies access to all resources in the RestAPI
 func HandleAuth(ctx context.Context, req events.APIGatewayCustomAuthorizerRequest) (events.APIGatewayCustomAuthorizerResponse, error) {
 	// token := strings.ToLower(evt.AuthorizationToken)
 	// validate the incoming token
@@ -21,7 +23,7 @@ func HandleAuth(ctx context.Context, req events.APIGatewayCustomAuthorizerReques
 
 	// if the client token is not recognized or invalid
 	// you can send a 401 Unauthorized response to the client by failing like so:
-	// return nil, errors.New("Unauthorized")
+	// return events.APIGatewayCustomAuthorizerResponse{}, errors.New("Unauthorized")
 
 	// if the token is valid, a policy should be generated which will allow or deny access to the client
 
@@ -31,9 +33,9 @@ func HandleAuth(ctx context.Context, req events.APIGatewayCustomAuthorizerReques
 	methodArn := req.MethodArn
 	arnPartials := strings.Split(methodArn, ":")
 	region := arnPartials[3]
-	awsAccountId := arnPartials[4]
+	awsAccountID := arnPartials[4]
 	apiGatewayArnPartials := strings.Split(arnPartials[5], "/")
-	restApiId := apiGatewayArnPartials[0]
+	restAPIID := apiGatewayArnPartials[0]
 	stage := apiGatewayArnPartials[1]
 	//httpMethod := apiGatewayArnPartials[2]
 	//resource := "" // root resource
@@ -45,12 +47,12 @@ func HandleAuth(ctx context.Context, req events.APIGatewayCustomAuthorizerReques
 	// depending on your use case, you might store policies in a DB, or generate them on the fly
 
 	// keep in mind, the policy is cached for 5 minutes by default (TTL is configurable in the authorizer)
-	// and will apply to subsequent calls to any method/resource in the RestApi
+	// and will apply to subsequent calls to any method/resource in the RestAPI
 	// made with the same token
 
-	// the example policy below denies access to all resources in the RestApi
+	// the example policy below denies access to all resources in the RestAPI
 
-	principalDocumentBuilder := NewAPIGatewayCustomAuthorizerPolicyBuilder(region, awsAccountId, restApiId, stage)
+	principalDocumentBuilder := auth.NewAPIGatewayCustomAuthorizerPolicyBuilder(region, awsAccountID, restAPIID, stage)
 	err := principalDocumentBuilder.DenyAllMethods()
 
 	if err != nil {
